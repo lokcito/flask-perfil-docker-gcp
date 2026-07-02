@@ -17,7 +17,7 @@ def home():
 
 @app.route("/storage", methods=["GET", "POST"])
 def storage_route():
-    signed_url = None
+    public_url = None
     if request.method == "POST":
         if "file" in request.files:
             file = request.files["file"]
@@ -27,16 +27,16 @@ def storage_route():
                 bucket = client.bucket(GCS_BUCKET_NAME)
                 blob = bucket.blob(file.filename)
                 
+                # Subir el archivo
                 blob.upload_from_file(file)
                 
-                # Generate signed URL valid for 1 hour
-                signed_url = blob.generate_signed_url(
-                    version="v4",
-                    expiration=datetime.timedelta(hours=1),
-                    method="GET"
-                )
+                # Hacer el archivo público (reemplaza la firma por falta de permisos)
+                blob.make_public()
+                
+                # Construir la URL pública estándar
+                public_url = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{blob.name}"
 
-    return render_template('storage.html', title='Equisd - Storage', signed_url=signed_url)
+    return render_template('storage.html', title='Equisd - Storage', signed_url=public_url)
 
 if __name__ == "__main__":
     print(f"running debug as {DEBUG}")
